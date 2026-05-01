@@ -804,11 +804,6 @@ function createCard(page) {
   card.dataset.id = page.id;
 
   card.innerHTML = `
-    <div class="drag-handle" title="Drag to reorder">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="3" r="1.2" fill="currentColor"/><circle cx="9" cy="3" r="1.2" fill="currentColor"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg>
-    </div>
-    <div class="page-badge">${page.origPageNum}</div>
-    <div class="rotation-badge${page.rotation ? ' visible' : ''}" id="rotbadge-${page.id}">${page.rotation ? page.rotation + '°' : ''}</div>
     <div class="card-thumb">
       <div class="skeleton" id="skel-${page.id}"></div>
       <canvas id="canvas-${page.id}" style="display:none;"></canvas>
@@ -823,6 +818,11 @@ function createCard(page) {
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       </div>
+      <div class="drag-handle" title="Drag to reorder">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="3" r="1.2" fill="currentColor"/><circle cx="9" cy="3" r="1.2" fill="currentColor"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="page-badge">${page.origPageNum}</div>
+      <div class="rotation-badge${page.rotation ? ' visible' : ''}" id="rotbadge-${page.id}">${page.rotation ? page.rotation + '°' : ''}</div>
     </div>
     <div class="card-footer">
       <div class="card-filename" title="${escapeHtml(page.fileName)}">${escapeHtml(page.fileName)}</div>
