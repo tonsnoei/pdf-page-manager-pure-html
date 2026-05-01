@@ -243,9 +243,14 @@
   }
 
   .card-thumb canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     display: block;
   }
 
@@ -326,6 +331,23 @@
     border-radius: 10px;
     backdrop-filter: blur(4px);
   }
+
+  /* Rotation badge */
+  .rotation-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(99,102,241,.85);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+    display: none;
+  }
+
+  .rotation-badge.visible { display: block; }
 
   /* Card footer */
   .card-footer {
@@ -635,9 +657,9 @@ const lightboxLabel  = document.getElementById('lightboxLabel');
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-function getThumbScale(pdfPage) {
-  const vp = pdfPage.getViewport({ scale: 1 });
-  return 180 / vp.width;
+function getThumbScale(pdfPage, rotation = 0) {
+  const vp = pdfPage.getViewport({ scale: 1, rotation });
+  return Math.min(180 / vp.width, 240 / vp.height);
 }
 
 function queueRender(page) {
@@ -734,7 +756,7 @@ async function loadFiles(fileList) {
   for (const file of files) {
     try {
       const bytes = await file.arrayBuffer();
-      state.pdfBytesCache.set(file.name, bytes);
+      state.pdfBytesCache.set(file.name, bytes.slice(0)); // keep a copy; PDF.js may transfer the original
 
       const loadingTask = pdfjsLib.getDocument({ data: bytes });
       const pdf = await loadingTask.promise;
@@ -786,6 +808,7 @@ function createCard(page) {
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="3" r="1.2" fill="currentColor"/><circle cx="9" cy="3" r="1.2" fill="currentColor"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg>
     </div>
     <div class="page-badge">${page.origPageNum}</div>
+    <div class="rotation-badge${page.rotation ? ' visible' : ''}" id="rotbadge-${page.id}">${page.rotation ? page.rotation + '°' : ''}</div>
     <div class="card-thumb">
       <div class="skeleton" id="skel-${page.id}"></div>
       <canvas id="canvas-${page.id}" style="display:none;"></canvas>
@@ -951,7 +974,7 @@ async function renderThumb(page, scale = null) {
 
   try {
     const pdfPage = await doc.getPage(page.origPageNum);
-    const viewport = pdfPage.getViewport({ scale: scale || getThumbScale(pdfPage), rotation: page.rotation });
+    const viewport = pdfPage.getViewport({ scale: scale || getThumbScale(pdfPage, page.rotation), rotation: page.rotation });
     canvas.width  = viewport.width;
     canvas.height = viewport.height;
     await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
@@ -967,6 +990,16 @@ function rotatePage(id) {
   const page = state.pages.find(p => p.id === id);
   if (!page) return;
   page.rotation = (page.rotation + 90) % 360;
+  const badge = document.getElementById(`rotbadge-${id}`);
+  if (badge) {
+    if (page.rotation) {
+      badge.textContent = page.rotation + '°';
+      badge.classList.add('visible');
+    } else {
+      badge.textContent = '';
+      badge.classList.remove('visible');
+    }
+  }
   queueRender(page);
 }
 
@@ -1002,15 +1035,23 @@ async function downloadPDF() {
     const { PDFDocument } = PDFLib;
     const outDoc = await PDFDocument.create();
     const total = state.pages.length;
+    const srcCache = new Map();
 
     for (let i = 0; i < total; i++) {
       const page = state.pages[i];
       const bytes = state.pdfBytesCache.get(page.fileName);
       if (!bytes) continue;
 
-      const src = await PDFDocument.load(bytes);
+      let src = srcCache.get(page.fileName);
+      if (!src) {
+        src = await PDFDocument.load(bytes.slice(0));
+        srcCache.set(page.fileName, src);
+      }
       const [copy] = await outDoc.copyPages(src, [page.pageIndex]);
-      copy.setRotation({ angle: page.rotation });
+      if (page.rotation !== 0) {
+        const existing = copy.getRotation().angle;
+        copy.setRotation(PDFLib.degrees((existing + page.rotation) % 360));
+      }
       outDoc.addPage(copy);
 
       setProgress(10 + Math.round((i / total) * 85));
