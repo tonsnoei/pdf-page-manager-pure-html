@@ -19,6 +19,7 @@ PDF Page Manager lets you combine pages from multiple PDF files, remove pages yo
 - Preview every page as a rendered thumbnail
 - Drag and drop to reorder pages across files
 - Remove individual pages with one tap
+- Rotate pages
 - Download the final result as a merged PDF
 - Works fully offline after the first load
 
@@ -83,7 +84,6 @@ All processing happens locally in your browser. Your PDF files are never uploade
 Contributions are welcome. Since the entire project is a single HTML file, a pull request is usually just one file changed.
 
 Some ideas for improvements:
-- Page rotation (90° / 180°)
 - Zoom controls for thumbnail size
 - Password-protected PDF support
 - Dark mode
