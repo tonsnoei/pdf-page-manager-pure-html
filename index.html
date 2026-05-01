@@ -10,11 +10,11 @@
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://privatepdf.eu/" />
 
-<!-- Favicon: SVG for modern browsers, PNG fallback for older ones, Apple touch icon for iOS -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iIzYzNjZmMSIvPjxyZWN0IHg9IjUiIHk9IjMiIHdpZHRoPSIxNCIgaGVpZ2h0PSIxOCIgcng9IjIuNSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9Ii45Ii8+PHBhdGggZD0iTTggNy41aDhNOCAxMC41aDhNOCAxMy41aDUiIHN0cm9rZT0iIzYzNjZmMSIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==">
-<link rel="icon" type="image/png" sizes="32x32" id="favicon-png-32">
-<link rel="icon" type="image/png" sizes="16x16" id="favicon-png-16">
-<link rel="apple-touch-icon" sizes="180x180" id="favicon-apple">
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-png-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-png-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon-apple.png">
 
 <!-- Open Graph -->
 <meta property="og:title" content="PrivatePDF - Free Online PDF Editor" />
@@ -28,6 +28,14 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="PrivatePDF - Free Online PDF Editor" />
 <meta name="twitter:description" content="Merge, reorder, rotate and delete PDF pages in your browser. No upload. 100% private." />
+
+<!-- Privacy-friendly analytics by Plausible -->
+<script async src="https://analytics.nlapp.nl/js/pa-kX_HrL6QWG7lmF7KE7q2s.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -792,60 +800,6 @@
     .hero p { font-size: 15px; }
   }
 </style>
-<script>
-// Generate PNG favicons via canvas for browsers that don't support SVG favicons (e.g. Safari <12, IE)
-(function() {
-  function makeFavicon(size) {
-    var c = document.createElement('canvas');
-    c.width = c.height = size;
-    var ctx = c.getContext('2d');
-    var s = size / 24;
-    // Background
-    ctx.fillStyle = '#6366f1';
-    ctx.beginPath();
-    ctx.roundRect(0, 0, size, size, 5 * s);
-    ctx.fill();
-    // Document body
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.beginPath();
-    ctx.roundRect(5 * s, 3 * s, 14 * s, 18 * s, 2.5 * s);
-    ctx.fill();
-    // Lines
-    ctx.strokeStyle = '#6366f1';
-    ctx.lineWidth = 1.8 * s;
-    ctx.lineCap = 'round';
-    [[8, 7.5, 16, 7.5], [8, 10.5, 16, 10.5], [8, 13.5, 13, 13.5]].forEach(function(l) {
-      ctx.beginPath();
-      ctx.moveTo(l[0] * s, l[1] * s);
-      ctx.lineTo(l[2] * s, l[3] * s);
-      ctx.stroke();
-    });
-    return c.toDataURL('image/png');
-  }
-  // roundRect polyfill for older browsers
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-      this.beginPath();
-      this.moveTo(x + r, y);
-      this.lineTo(x + w - r, y);
-      this.quadraticCurveTo(x + w, y, x + w, y + r);
-      this.lineTo(x + w, y + h - r);
-      this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      this.lineTo(x + r, y + h);
-      this.quadraticCurveTo(x, y + h, x, y + h - r);
-      this.lineTo(x, y + r);
-      this.quadraticCurveTo(x, y, x + r, y);
-      this.closePath();
-    };
-  }
-  var p32 = document.getElementById('favicon-png-32');
-  var p16 = document.getElementById('favicon-png-16');
-  var apple = document.getElementById('favicon-apple');
-  if (p32) p32.href = makeFavicon(32);
-  if (p16) p16.href = makeFavicon(16);
-  if (apple) apple.href = makeFavicon(180);
-})();
-</script>
 </head>
 <body>
 

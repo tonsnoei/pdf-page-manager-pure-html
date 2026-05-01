@@ -27,7 +27,7 @@ PDF Page Manager lets you combine pages from multiple PDF files, remove pages yo
 
 ## Try it now
 
-[![Try it now](https://img.shields.io/badge/Try%20it%20now-Live%20Demo-6366f1?style=for-the-badge&logo=github)](https://tonsnoei.github.io/pdf-page-manager-pure-html/)
+[![Try it now](https://img.shields.io/badge/Try%20it%20now-Live%20Demo-6366f1?style=for-the-badge&logo=github)](https://privatepdf.eu/)
 
 ---
 
