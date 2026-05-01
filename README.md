@@ -24,16 +24,22 @@ PDF Page Manager lets you combine pages from multiple PDF files, remove pages yo
 
 ---
 
+## Try it now
+
+[![Try it now](https://img.shields.io/badge/Try%20it%20now-Live%20Demo-6366f1?style=for-the-badge&logo=github)](https://tonsnoei.github.io/pdf-page-manager-pure-html/)
+
+---
+
 ## Demo
 
-Open `pdf-tool.html` directly in any modern browser. No web server needed.
+Open `index.html` directly in any modern browser. No web server needed.
 
 ---
 
 ## How to use
 
 1. Download or clone this repository
-2. Open `pdf-tool.html` in Chrome, Firefox, Edge, or Safari
+2. Open `index.html` in Chrome, Firefox, Edge, or Safari
 3. Upload one or more PDF files using the upload area
 4. Rearrange pages by dragging thumbnails into the order you want
 5. Delete pages you don't need by clicking the ✕ button on any thumbnail
