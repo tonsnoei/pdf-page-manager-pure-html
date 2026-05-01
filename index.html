@@ -294,6 +294,7 @@
   .overlay-btn:hover { transform: scale(1.15); }
 
   .btn-view { background: rgba(255,255,255,.9); color: var(--accent-dark); }
+  .btn-rotate { background: rgba(255,255,255,.9); color: var(--accent-dark); }
   .btn-del  { background: rgba(239,68,68,.9); color: #fff; }
 
   /* Drag handle */
@@ -515,85 +516,78 @@
     .header { padding: 0 12px; }
     .logo span { display: none; }
     .btn { padding: 7px 12px; font-size: 13px; }
-    .page-counter { display: none; }
-    .main { padding: 16px 12px; }
+    .page-counter { font-size: 12px; padding: 3px 10px; }
   }
 </style>
 </head>
 <body>
 
+<!-- Header -->
 <header class="header">
   <div class="logo">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect width="28" height="28" rx="7" fill="#6366f1"/>
-      <path d="M7 8h14M7 12h10M7 16h12M7 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="2" width="18" height="20" rx="3" stroke="currentColor" stroke-width="2"/>
+      <path d="M7 6h10M7 10h10M7 14h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </svg>
     <span>PDF Page Manager</span>
   </div>
   <div class="header-actions">
-    <div class="page-counter" id="pageCounter" style="display:none">0 pages</div>
-    <label class="btn btn-secondary" id="addMoreBtn" style="display:none; cursor:pointer">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      Add PDFs
-      <input type="file" accept="application/pdf" multiple id="addMoreInput" style="display:none">
-    </label>
-    <button class="btn btn-primary" id="downloadBtn" style="display:none" disabled>
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M3 12h10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Download PDF
+    <span class="page-counter" id="pageCounter">0 pages</span>
+    <input type="file" id="addMoreInput" accept=".pdf" multiple hidden>
+    <button class="btn btn-secondary" id="addMoreBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add More
+    </button>
+    <button class="btn btn-primary" id="downloadBtn" disabled>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v9M3 7l4 4 4-4M1 11v1h12v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download
+    </button>
+    <button class="btn btn-danger" id="clearAllBtn" disabled>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Clear
     </button>
   </div>
 </header>
 
+<!-- Main -->
 <main class="main">
-  <!-- Empty state -->
   <div id="emptyState" class="empty-state">
     <div class="upload-zone" id="dropZone">
-      <input type="file" accept="application/pdf" multiple id="fileInput">
+      <input type="file" id="fileInput" accept=".pdf" multiple>
       <div class="upload-icon">
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-          <path d="M18 4C10.268 4 4 10.268 4 18s6.268 14 14 14 14-6.268 14-14S25.732 4 18 4z" fill="#eef2ff"/>
-          <path d="M18 10v12M13 15l5-5 5 5M11 26h14" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="upload-title">Drop PDF files here</div>
-      <div class="upload-sub">
-        or <strong>click to browse</strong><br>
-        Upload one or more PDF files to get started.<br>
-        Reorder, delete pages, and export a new PDF.
+      <h2 class="upload-title">Drop PDF files here</h2>
+      <p class="upload-sub">or click to browse. Supports multiple files.<br><strong>Pages can be reordered, rotated & merged.</strong></p>
+    </div>
+  </div>
+
+  <div id="gridWrap" style="display:none;">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="page-counter" id="gridCounter">0 pages</span>
       </div>
     </div>
+    <div class="grid" id="pageGrid"></div>
   </div>
-
-  <!-- Toolbar (shown when pages exist) -->
-  <div class="toolbar" id="toolbar" style="display:none">
-    <div class="toolbar-left">
-      <span style="font-size:15px; font-weight:700; color:var(--text)">Pages</span>
-    </div>
-    <button class="btn btn-danger" id="clearAllBtn">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M3 3l.7 8.6A1 1 0 004.7 13h4.6a1 1 0 001-.86L11 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Clear all
-    </button>
-  </div>
-
-  <!-- Page grid -->
-  <div class="grid" id="pageGrid" style="display:none"></div>
 </main>
 
-<!-- Progress overlay -->
+<!-- Progress -->
 <div class="progress-overlay" id="progressOverlay">
   <div class="progress-card">
-    <h3>Building PDF…</h3>
-    <p>Merging your pages into a single file</p>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="progressBar"></div>
-    </div>
+    <h3 id="progressTitle">Processing…</h3>
+    <p id="progressMsg">Please wait</p>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar"></div></div>
     <div class="progress-pct" id="progressPct">0%</div>
   </div>
 </div>
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox">
-  <div class="lightbox-inner" id="lightboxInner">
+  <div class="lightbox-inner">
     <button class="lightbox-close" id="lightboxClose">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
@@ -606,404 +600,86 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-// ─── State ────────────────────────────────────────────────────────────────────
-// pages: [{ id, fileName, origPageNum, pdfBytes, pageIndex }]
-// pdfDocCache: Map<fileName, PDFDocument (pdfjs)>
+// ─── Config & State ────────────────────────────────────────────────────────────
 const state = {
   pages: [],
-  pdfBytesCache: new Map(),  // fileName -> ArrayBuffer (original bytes for pdf-lib)
-  pdfJsCache: new Map(),     // fileName -> pdfjs document
+  pdfBytesCache: new Map(),
+  pdfJsCache: new Map(),
   renderQueue: [],
-  rendering: false,
+  isRendering: false,
 };
 
-let dragSrcId = null;
-let touchGhost = null;
-let touchDragId = null;
-let touchStartX = 0, touchStartY = 0;
-let touchCurrentTarget = null;
-
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const emptyState   = document.getElementById('emptyState');
-const toolbar      = document.getElementById('toolbar');
-const pageGrid     = document.getElementById('pageGrid');
-const fileInput    = document.getElementById('fileInput');
-const addMoreInput = document.getElementById('addMoreInput');
-const addMoreBtn   = document.getElementById('addMoreBtn');
-const downloadBtn  = document.getElementById('downloadBtn');
-const clearAllBtn  = document.getElementById('clearAllBtn');
-const pageCounter  = document.getElementById('pageCounter');
-const dropZone     = document.getElementById('dropZone');
-const progressOverlay = document.getElementById('progressOverlay');
-const progressBar  = document.getElementById('progressBar');
-const progressPct  = document.getElementById('progressPct');
-const lightbox     = document.getElementById('lightbox');
+// ─── DOM refs ──────────────────────────────────────────────────────────────────
+const fileInput      = document.getElementById('fileInput');
+const addMoreInput   = document.getElementById('addMoreInput');
+const addMoreBtn     = document.getElementById('addMoreBtn');
+const downloadBtn    = document.getElementById('downloadBtn');
+const clearAllBtn    = document.getElementById('clearAllBtn');
+const dropZone       = document.getElementById('dropZone');
+const emptyState     = document.getElementById('emptyState');
+const gridWrap       = document.getElementById('gridWrap');
+const pageGrid       = document.getElementById('pageGrid');
+const pageCounter    = document.getElementById('pageCounter');
+const gridCounter    = document.getElementById('gridCounter');
+const progressOverlay= document.getElementById('progressOverlay');
+const progressTitle  = document.getElementById('progressTitle');
+const progressMsg    = document.getElementById('progressMsg');
+const progressBar    = document.getElementById('progressBar');
+const progressPct    = document.getElementById('progressPct');
+const lightbox       = document.getElementById('lightbox');
+const lightboxClose  = document.getElementById('lightboxClose');
 const lightboxCanvas = document.getElementById('lightboxCanvas');
 const lightboxLabel  = document.getElementById('lightboxLabel');
-const lightboxClose  = document.getElementById('lightboxClose');
 
-// ─── File loading ─────────────────────────────────────────────────────────────
-async function loadFiles(files) {
-  const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
-  if (!pdfFiles.length) { showToast('Please select PDF files only'); return; }
+// ─── PDF.js setup ──────────────────────────────────────────────────────────────
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  for (const file of pdfFiles) {
-    const bytes = await file.arrayBuffer();
-    state.pdfBytesCache.set(file.name, bytes);
-
-    let doc;
-    try {
-      doc = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
-    } catch(e) {
-      showToast(`Could not read "${file.name}"`);
-      continue;
-    }
-    state.pdfJsCache.set(file.name, doc);
-
-    for (let i = 1; i <= doc.numPages; i++) {
-      state.pages.push({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        fileName: file.name,
-        origPageNum: i,
-        pageIndex: i - 1,
-      });
-    }
-  }
-
-  renderGrid();
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function getThumbScale(pdfPage) {
+  const vp = pdfPage.getViewport({ scale: 1 });
+  return 180 / vp.width;
 }
 
-// ─── Grid rendering ───────────────────────────────────────────────────────────
-function renderGrid() {
-  const hasPages = state.pages.length > 0;
-
-  emptyState.style.display   = hasPages ? 'none' : '';
-  toolbar.style.display      = hasPages ? '' : 'none';
-  pageGrid.style.display     = hasPages ? '' : 'none';
-  addMoreBtn.style.display   = hasPages ? '' : 'none';
-  downloadBtn.style.display  = hasPages ? '' : 'none';
-  pageCounter.style.display  = hasPages ? '' : 'none';
-  downloadBtn.disabled       = !hasPages;
-
-  // Count files
-  const fileCount = new Set(state.pages.map(p => p.fileName)).size;
-  pageCounter.textContent = `${state.pages.length} page${state.pages.length !== 1 ? 's' : ''} from ${fileCount} file${fileCount !== 1 ? 's' : ''}`;
-
-  pageGrid.innerHTML = '';
-  state.pages.forEach((page, idx) => {
-    pageGrid.appendChild(createCard(page, idx));
-  });
-
-  // Queue thumbnail rendering
-  state.pages.forEach(page => queueRender(page));
-}
-
-function createCard(page, idx) {
-  const card = document.createElement('div');
-  card.className = 'page-card';
-  card.dataset.id = page.id;
-  card.draggable = true;
-
-  card.innerHTML = `
-    <div class="card-thumb">
-      <div class="skeleton" id="skel-${page.id}"></div>
-      <canvas id="canvas-${page.id}" style="display:none"></canvas>
-      <div class="drop-line" id="dl-${page.id}"></div>
-      <div class="page-badge">${idx + 1}</div>
-      <div class="drag-handle">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 3h6M4 7h6M4 11h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </div>
-      <div class="card-overlay">
-        <button class="overlay-btn btn-view" data-id="${page.id}" title="View page">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.8"/></svg>
-        </button>
-        <button class="overlay-btn btn-del" data-id="${page.id}" title="Remove page">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="card-footer">
-      <div class="card-filename">${escapeHtml(page.fileName)}</div>
-      <div class="card-pagenum">Page ${idx + 1}</div>
-    </div>
-  `;
-
-  // Desktop drag
-  card.addEventListener('dragstart', onDragStart);
-  card.addEventListener('dragend', onDragEnd);
-  card.addEventListener('dragover', onDragOver);
-  card.addEventListener('dragleave', onDragLeave);
-  card.addEventListener('drop', onDrop);
-
-  // Touch drag
-  card.addEventListener('touchstart', onTouchStart, { passive: false });
-  card.addEventListener('touchmove', onTouchMove, { passive: false });
-  card.addEventListener('touchend', onTouchEnd);
-
-  // Buttons
-  card.querySelector('.btn-view').addEventListener('click', e => {
-    e.stopPropagation();
-    openLightbox(page.id);
-  });
-  card.querySelector('.btn-del').addEventListener('click', e => {
-    e.stopPropagation();
-    removePage(page.id);
-  });
-
-  return card;
-}
-
-// ─── Thumbnail rendering ──────────────────────────────────────────────────────
 function queueRender(page) {
   state.renderQueue.push(page);
-  processQueue();
+  if (!state.isRendering) processQueue();
 }
 
 async function processQueue() {
-  if (state.rendering) return;
-  state.rendering = true;
-  while (state.renderQueue.length) {
-    const page = state.renderQueue.shift();
-    await renderThumb(page);
-  }
-  state.rendering = false;
+  if (state.renderQueue.length === 0) { state.isRendering = false; return; }
+  state.isRendering = true;
+  const page = state.renderQueue.shift();
+  await renderThumb(page);
+  setTimeout(processQueue, 10);
 }
 
-async function renderThumb(page, scale = null) {
-  const canvas = document.getElementById(`canvas-${page.id}`);
-  const skel   = document.getElementById(`skel-${page.id}`);
-  if (!canvas) return;
-
-  const doc = state.pdfJsCache.get(page.fileName);
-  if (!doc) return;
-
-  try {
-    const pdfPage = await doc.getPage(page.origPageNum);
-    const viewport = pdfPage.getViewport({ scale: scale || getThumbScale(pdfPage) });
-    canvas.width  = viewport.width;
-    canvas.height = viewport.height;
-    await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    canvas.style.display = 'block';
-    if (skel) skel.style.display = 'none';
-  } catch(e) {
-    if (skel) skel.style.display = 'none';
-  }
+function updateCounters() {
+  const n = state.pages.length;
+  const txt = `${n} page${n !== 1 ? 's' : ''}`;
+  pageCounter.textContent = txt;
+  gridCounter.textContent = txt;
+  downloadBtn.disabled = n === 0;
+  clearAllBtn.disabled = n === 0;
 }
 
-function getThumbScale(pdfPage) {
-  const viewport = pdfPage.getViewport({ scale: 1 });
-  return 180 / viewport.width;
-}
-
-// ─── Desktop Drag & Drop ──────────────────────────────────────────────────────
-function onDragStart(e) {
-  dragSrcId = this.dataset.id;
-  this.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', dragSrcId);
-}
-
-function onDragEnd(e) {
-  this.classList.remove('dragging');
-  clearDropIndicators();
-  dragSrcId = null;
-}
-
-function onDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  if (!dragSrcId || this.dataset.id === dragSrcId) return;
-  clearDropIndicators();
-  const dl = document.getElementById(`dl-${this.dataset.id}`);
-  if (!dl) return;
-  const rect = this.getBoundingClientRect();
-  const isBefore = e.clientX < rect.left + rect.width / 2;
-  dl.className = `drop-line ${isBefore ? 'before' : 'after'}`;
-  touchCurrentTarget = { id: this.dataset.id, before: isBefore };
-}
-
-function onDragLeave(e) {
-  if (!this.contains(e.relatedTarget)) {
-    clearDropIndicators();
-    touchCurrentTarget = null;
-  }
-}
-
-function onDrop(e) {
-  e.preventDefault();
-  if (!dragSrcId || this.dataset.id === dragSrcId) return;
-  const rect = this.getBoundingClientRect();
-  const before = e.clientX < rect.left + rect.width / 2;
-  movePage(dragSrcId, this.dataset.id, before);
-}
-
-function clearDropIndicators() {
-  document.querySelectorAll('.drop-line').forEach(el => el.className = 'drop-line');
-  document.querySelectorAll('.page-card.drag-target-before, .page-card.drag-target-after')
-    .forEach(el => { el.classList.remove('drag-target-before', 'drag-target-after'); });
-}
-
-// ─── Touch Drag & Drop ────────────────────────────────────────────────────────
-function onTouchStart(e) {
-  if (e.touches.length !== 1) return;
-  const t = e.touches[0];
-  touchStartX = t.clientX;
-  touchStartY = t.clientY;
-  touchDragId = null;
-
-  // Delay to distinguish tap from drag
-  this._touchTimer = setTimeout(() => {
-    touchDragId = this.dataset.id;
-    this.classList.add('dragging');
-    createTouchGhost(this, t.clientX, t.clientY);
-  }, 120);
-}
-
-function onTouchMove(e) {
-  const t = e.touches[0];
-  if (!touchDragId) {
-    // Check if moved enough to cancel the timer
-    const dx = Math.abs(t.clientX - touchStartX);
-    const dy = Math.abs(t.clientY - touchStartY);
-    if (dx > 5 || dy > 5) clearTimeout(document.querySelector(`[data-id]`)?._touchTimer);
-    return;
-  }
-  e.preventDefault();
-  moveTouchGhost(t.clientX, t.clientY);
-
-  // Find drop target
-  if (touchGhost) touchGhost.style.display = 'none';
-  const el = document.elementFromPoint(t.clientX, t.clientY);
-  if (touchGhost) touchGhost.style.display = '';
-  const card = el?.closest('.page-card');
-  clearDropIndicators();
-  if (card && card.dataset.id !== touchDragId) {
-    const rect = card.getBoundingClientRect();
-    const before = t.clientX < rect.left + rect.width / 2;
-    const dl = document.getElementById(`dl-${card.dataset.id}`);
-    if (dl) dl.className = `drop-line ${before ? 'before' : 'after'}`;
-    touchCurrentTarget = { id: card.dataset.id, before };
-  } else {
-    touchCurrentTarget = null;
-  }
-}
-
-function onTouchEnd(e) {
-  clearTimeout(this._touchTimer);
-  if (!touchDragId) return;
-
-  removeTouchGhost();
-  const card = document.querySelector(`[data-id="${touchDragId}"]`);
-  if (card) card.classList.remove('dragging');
-  clearDropIndicators();
-
-  if (touchCurrentTarget) {
-    movePage(touchDragId, touchCurrentTarget.id, touchCurrentTarget.before);
-  }
-
-  touchDragId = null;
-  touchCurrentTarget = null;
-}
-
-function createTouchGhost(card, x, y) {
-  if (touchGhost) removeTouchGhost();
-  touchGhost = card.cloneNode(true);
-  touchGhost.className = 'touch-ghost';
-  const w = card.offsetWidth;
-  touchGhost.style.width = w + 'px';
-  touchGhost.style.left = (x - w / 2) + 'px';
-  touchGhost.style.top  = (y - 40) + 'px';
-  document.body.appendChild(touchGhost);
-}
-
-function moveTouchGhost(x, y) {
-  if (!touchGhost) return;
-  const w = touchGhost.offsetWidth;
-  touchGhost.style.left = (x - w / 2) + 'px';
-  touchGhost.style.top  = (y - 40) + 'px';
-}
-
-function removeTouchGhost() {
-  if (touchGhost) { touchGhost.remove(); touchGhost = null; }
-}
-
-// ─── Page operations ──────────────────────────────────────────────────────────
-function movePage(srcId, targetId, before) {
-  const srcIdx    = state.pages.findIndex(p => p.id === srcId);
-  const targetIdx = state.pages.findIndex(p => p.id === targetId);
-  if (srcIdx === -1 || targetIdx === -1) return;
-
-  const [page] = state.pages.splice(srcIdx, 1);
-  const newTarget = state.pages.findIndex(p => p.id === targetId);
-  state.pages.splice(before ? newTarget : newTarget + 1, 0, page);
-  renderGrid();
-}
-
-function removePage(id) {
-  state.pages = state.pages.filter(p => p.id !== id);
-  renderGrid();
-}
-
-// ─── PDF Export ───────────────────────────────────────────────────────────────
-async function downloadPDF() {
-  if (!state.pages.length) return;
-  showProgress(0);
-
-  try {
-    const { PDFDocument } = PDFLib;
-    const outDoc = await PDFDocument.create();
-    const total  = state.pages.length;
-
-    // Group pages by source file to avoid re-loading
-    const srcDocs = new Map();
-
-    for (let i = 0; i < total; i++) {
-      const page = state.pages[i];
-      if (!srcDocs.has(page.fileName)) {
-        const bytes = state.pdfBytesCache.get(page.fileName);
-        const doc   = await PDFDocument.load(bytes);
-        srcDocs.set(page.fileName, doc);
-      }
-      const src    = srcDocs.get(page.fileName);
-      const [copy] = await outDoc.copyPages(src, [page.pageIndex]);
-      outDoc.addPage(copy);
-      showProgress(Math.round(((i + 1) / total) * 90));
-    }
-
-    showProgress(95);
-    const pdfBytes = await outDoc.save();
-    showProgress(100);
-
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'merged.pdf';
-    a.click();
-    URL.revokeObjectURL(url);
-
-    setTimeout(() => hideProgress(), 600);
-    showToast('PDF downloaded!');
-  } catch(e) {
-    hideProgress();
-    showToast('Export failed: ' + e.message);
-  }
-}
-
-function showProgress(pct) {
+function showProgress(title, msg) {
+  progressTitle.textContent = title;
+  progressMsg.textContent   = msg;
   progressOverlay.classList.add('active');
+  progressBar.style.width = '0%';
+  progressPct.textContent = '0%';
+}
+
+function setProgress(pct) {
   progressBar.style.width = pct + '%';
-  progressPct.textContent  = pct + '%';
+  progressPct.textContent = pct + '%';
 }
 
 function hideProgress() {
   progressOverlay.classList.remove('active');
 }
 
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
+// ─── Lightbox ──────────────────────────────────────────────────────────────────
 async function openLightbox(pageId) {
   const page = state.pages.find(p => p.id === pageId);
   if (!page) return;
@@ -1014,7 +690,7 @@ async function openLightbox(pageId) {
   const vp = pdfPage.getViewport({ scale: 1 });
   const maxW = Math.min(window.innerWidth * 0.85, 680);
   const scale = maxW / vp.width;
-  const viewport = pdfPage.getViewport({ scale });
+  const viewport = pdfPage.getViewport({ scale, rotation: page.rotation });
   lightboxCanvas.width  = viewport.width;
   lightboxCanvas.height = viewport.height;
   await pdfPage.render({ canvasContext: lightboxCanvas.getContext('2d'), viewport }).promise;
@@ -1028,7 +704,7 @@ lightboxClose.addEventListener('click', closeLightbox);
 lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg) {
   const toast = document.createElement('div');
   toast.className = 'toast';
@@ -1041,14 +717,330 @@ function showToast(msg) {
   }, 2800);
 }
 
-// ─── Utility ──────────────────────────────────────────────────────────────────
+// ─── Utility ───────────────────────────────────────────────────────────────────
 function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ─── Event wiring ─────────────────────────────────────────────────────────────
+// ─── Core: Load Files ─────────────────────────────────────────────────────────
+async function loadFiles(fileList) {
+  const files = Array.from(fileList).filter(f => f.type === 'application/pdf');
+  if (!files.length) return;
+
+  showProgress('Loading PDFs…', 'Extracting pages');
+  let loaded = 0;
+  const total = files.length;
+
+  for (const file of files) {
+    try {
+      const bytes = await file.arrayBuffer();
+      state.pdfBytesCache.set(file.name, bytes);
+
+      const loadingTask = pdfjsLib.getDocument({ data: bytes });
+      const pdf = await loadingTask.promise;
+      state.pdfJsCache.set(file.name, pdf);
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        state.pages.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}-${i}`,
+          fileName: file.name,
+          origPageNum: i,
+          pageIndex: i - 1,
+          rotation: 0,
+        });
+      }
+
+      loaded++;
+      setProgress(Math.round((loaded / total) * 100));
+    } catch (err) {
+      console.error('Failed to load', file.name, err);
+      showToast(`Failed to load ${file.name}`);
+    }
+  }
+
+  hideProgress();
+  renderGrid();
+  updateCounters();
+  emptyState.style.display = 'none';
+  gridWrap.style.display = 'block';
+}
+
+// ─── Core: Render Grid ────────────────────────────────────────────────────────
+function renderGrid() {
+  pageGrid.innerHTML = '';
+  state.pages.forEach(page => {
+    const card = createCard(page);
+    pageGrid.appendChild(card);
+    queueRender(page);
+  });
+}
+
+function createCard(page) {
+  const card = document.createElement('div');
+  card.className = 'page-card';
+  card.draggable = true;
+  card.dataset.id = page.id;
+
+  card.innerHTML = `
+    <div class="drag-handle" title="Drag to reorder">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="3" r="1.2" fill="currentColor"/><circle cx="9" cy="3" r="1.2" fill="currentColor"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg>
+    </div>
+    <div class="page-badge">${page.origPageNum}</div>
+    <div class="card-thumb">
+      <div class="skeleton" id="skel-${page.id}"></div>
+      <canvas id="canvas-${page.id}" style="display:none;"></canvas>
+      <div class="card-overlay">
+        <button class="overlay-btn btn-view" data-id="${page.id}" title="View page">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
+        <button class="overlay-btn btn-rotate" data-id="${page.id}" title="Rotate page">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 0111.47-2.3M14 8a6 6 0 01-11.47 2.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 2v4h-4M2 14v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="overlay-btn btn-del" data-id="${page.id}" title="Remove page">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="card-footer">
+      <div class="card-filename" title="${escapeHtml(page.fileName)}">${escapeHtml(page.fileName)}</div>
+      <div class="card-pagenum">Page ${page.origPageNum}</div>
+    </div>
+  `;
+
+  // View
+  card.querySelector('.btn-view').addEventListener('click', e => {
+    e.stopPropagation();
+    openLightbox(page.id);
+  });
+
+  // Rotate
+  card.querySelector('.btn-rotate').addEventListener('click', e => {
+    e.stopPropagation();
+    rotatePage(page.id);
+  });
+
+  // Delete
+  card.querySelector('.btn-del').addEventListener('click', e => {
+    e.stopPropagation();
+    removePage(page.id);
+  });
+
+  // Drag events
+  card.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', page.id);
+    e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+  });
+
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    clearDropIndicators();
+  });
+
+  card.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = card.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    clearDropIndicators();
+    if (e.clientX < midX) {
+      card.classList.add('drag-target-before');
+    } else {
+      card.classList.add('drag-target-after');
+    }
+  });
+
+  card.addEventListener('dragleave', () => {
+    card.classList.remove('drag-target-before', 'drag-target-after');
+  });
+
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (!draggedId || draggedId === page.id) return;
+    const rect = card.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    const before = e.clientX < midX;
+    movePage(draggedId, page.id, before);
+    clearDropIndicators();
+  });
+
+  // Touch drag support
+  let touchClone = null;
+  let touchStartX, touchStartY, touchCurrentX, touchCurrentY;
+  let isDragging = false;
+
+  card.addEventListener('touchstart', e => {
+    if (e.target.closest('.overlay-btn')) return;
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    isDragging = false;
+  }, { passive: true });
+
+  card.addEventListener('touchmove', e => {
+    if (e.target.closest('.overlay-btn')) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    if (!isDragging && Math.abs(dx) + Math.abs(dy) > 10) {
+      isDragging = true;
+      touchClone = card.cloneNode(true);
+      touchClone.classList.add('touch-ghost');
+      touchClone.style.width = card.offsetWidth + 'px';
+      touchClone.style.height = card.offsetHeight + 'px';
+      document.body.appendChild(touchClone);
+      card.style.opacity = '0.4';
+    }
+    if (isDragging) {
+      e.preventDefault();
+      touchCurrentX = t.clientX;
+      touchCurrentY = t.clientY;
+      touchClone.style.left = (touchCurrentX - card.offsetWidth / 2) + 'px';
+      touchClone.style.top  = (touchCurrentY - card.offsetHeight / 2) + 'px';
+      clearDropIndicators();
+      const siblings = [...pageGrid.children];
+      for (const sib of siblings) {
+        if (sib === card) continue;
+        const r = sib.getBoundingClientRect();
+        const midX = r.left + r.width / 2;
+        if (touchCurrentX >= r.left && touchCurrentX <= r.right && touchCurrentY >= r.top && touchCurrentY <= r.bottom) {
+          sib.classList.add(touchCurrentX < midX ? 'drag-target-before' : 'drag-target-after');
+        }
+      }
+    }
+  }, { passive: false });
+
+  card.addEventListener('touchend', e => {
+    if (!isDragging) return;
+    isDragging = false;
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    card.style.opacity = '1';
+    clearDropIndicators();
+    const t = e.changedTouches[0];
+    const siblings = [...pageGrid.children];
+    for (const sib of siblings) {
+      if (sib === card) continue;
+      const r = sib.getBoundingClientRect();
+      const midX = r.left + r.width / 2;
+      if (t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom) {
+        const before = t.clientX < midX;
+        movePage(page.id, sib.dataset.id, before);
+        break;
+      }
+    }
+  });
+
+  return card;
+}
+
+function clearDropIndicators() {
+  document.querySelectorAll('.drag-target-before, .drag-target-after').forEach(el => {
+    el.classList.remove('drag-target-before', 'drag-target-after');
+  });
+}
+
+// ─── Core: Render Thumbnail ───────────────────────────────────────────────────
+async function renderThumb(page, scale = null) {
+  const canvas = document.getElementById(`canvas-${page.id}`);
+  const skel   = document.getElementById(`skel-${page.id}`);
+  if (!canvas) return;
+
+  const doc = state.pdfJsCache.get(page.fileName);
+  if (!doc) return;
+
+  try {
+    const pdfPage = await doc.getPage(page.origPageNum);
+    const viewport = pdfPage.getViewport({ scale: scale || getThumbScale(pdfPage), rotation: page.rotation });
+    canvas.width  = viewport.width;
+    canvas.height = viewport.height;
+    await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    canvas.style.display = 'block';
+    if (skel) skel.style.display = 'none';
+  } catch(e) {
+    if (skel) skel.style.display = 'none';
+  }
+}
+
+// ─── Core: Page Operations ────────────────────────────────────────────────────
+function rotatePage(id) {
+  const page = state.pages.find(p => p.id === id);
+  if (!page) return;
+  page.rotation = (page.rotation + 90) % 360;
+  queueRender(page);
+}
+
+function removePage(id) {
+  state.pages = state.pages.filter(p => p.id !== id);
+  renderGrid();
+  updateCounters();
+  if (state.pages.length === 0) {
+    emptyState.style.display = 'flex';
+    gridWrap.style.display = 'none';
+  }
+}
+
+function movePage(draggedId, targetId, before) {
+  const dragIdx = state.pages.findIndex(p => p.id === draggedId);
+  const targetIdx = state.pages.findIndex(p => p.id === targetId);
+  if (dragIdx === -1 || targetIdx === -1 || dragIdx === targetIdx) return;
+
+  const [moved] = state.pages.splice(dragIdx, 1);
+  const newTargetIdx = state.pages.findIndex(p => p.id === targetId);
+  const insertAt = before ? newTargetIdx : newTargetIdx + 1;
+  state.pages.splice(insertAt, 0, moved);
+  renderGrid();
+}
+
+// ─── Core: Download Merged PDF ────────────────────────────────────────────────
+async function downloadPDF() {
+  if (!state.pages.length) return;
+  showProgress('Merging PDF…', 'This may take a moment');
+  setProgress(10);
+
+  try {
+    const { PDFDocument } = PDFLib;
+    const outDoc = await PDFDocument.create();
+    const total = state.pages.length;
+
+    for (let i = 0; i < total; i++) {
+      const page = state.pages[i];
+      const bytes = state.pdfBytesCache.get(page.fileName);
+      if (!bytes) continue;
+
+      const src = await PDFDocument.load(bytes);
+      const [copy] = await outDoc.copyPages(src, [page.pageIndex]);
+      copy.setRotation({ angle: page.rotation });
+      outDoc.addPage(copy);
+
+      setProgress(10 + Math.round((i / total) * 85));
+    }
+
+    const pdfBytes = await outDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `merged_${Date.now()}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setProgress(100);
+    setTimeout(hideProgress, 600);
+    showToast('PDF downloaded successfully');
+  } catch (err) {
+    console.error(err);
+    hideProgress();
+    showToast('Failed to merge PDF');
+  }
+}
+
+// ─── Event wiring ──────────────────────────────────────────────────────────────
 fileInput.addEventListener('change', e => loadFiles(e.target.files));
 addMoreInput.addEventListener('change', e => loadFiles(e.target.files));
+addMoreBtn.addEventListener('click', () => addMoreInput.click());
 downloadBtn.addEventListener('click', downloadPDF);
 clearAllBtn.addEventListener('click', () => {
   if (!confirm('Remove all pages?')) return;
@@ -1056,6 +1048,9 @@ clearAllBtn.addEventListener('click', () => {
   state.pdfBytesCache.clear();
   state.pdfJsCache.clear();
   renderGrid();
+  updateCounters();
+  emptyState.style.display = 'flex';
+  gridWrap.style.display = 'none';
 });
 
 // Drop zone
