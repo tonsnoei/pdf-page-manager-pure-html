@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://privatepdf.eu/sitemap.xml
