@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Page Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --accent: #6366f1;
+    --accent-light: #818cf8;
+    --accent-dark: #4f46e5;
+    --accent-bg: #eef2ff;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: 200ms cubic-bezier(.4,0,.2,1);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--accent-dark);
+  }
+
+  .logo svg { flex-shrink: 0; }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .page-counter {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--accent-bg);
+    border: 1px solid #c7d2fe;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(99,102,241,.3);
+  }
+
+  .btn-primary:not(:disabled):hover {
+    background: var(--accent-dark);
+    box-shadow: 0 4px 12px rgba(99,102,241,.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:not(:disabled):hover {
+    background: var(--bg);
+    border-color: #cbd5e1;
+  }
+
+  .btn-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #fecaca;
+  }
+
+  .btn-danger:not(:disabled):hover {
+    background: #fee2e2;
+  }
+
+  /* Main layout */
+  .main { flex: 1; padding: 24px 20px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+  }
+
+  .upload-zone {
+    width: 100%;
+    max-width: 520px;
+    border: 2px dashed #c7d2fe;
+    border-radius: 20px;
+    padding: 52px 32px;
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--surface);
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+    transform: scale(1.01);
+  }
+
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .upload-icon {
+    width: 72px; height: 72px;
+    background: var(--accent-bg);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    color: var(--accent);
+  }
+
+  .upload-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .upload-sub { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+  .upload-sub strong { color: var(--accent); }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media (min-width: 480px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 720px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 1100px) { .grid { grid-template-columns: repeat(5, 1fr); } }
+
+  /* Page card */
+  .page-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow var(--transition), transform var(--transition);
+    position: relative;
+    cursor: grab;
+    border: 2px solid transparent;
+    user-select: none;
+  }
+
+  .page-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: #c7d2fe;
+  }
+
+  .page-card.dragging {
+    opacity: .4;
+    cursor: grabbing;
+  }
+
+  .page-card.drag-target-before { border-left: 3px solid var(--accent); }
+  .page-card.drag-target-after  { border-right: 3px solid var(--accent); }
+
+  /* Card thumbnail */
+  .card-thumb {
+    position: relative;
+    background: #f1f5f9;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-thumb canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    position: absolute;
+    inset: 0;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Card overlay (hover actions) */
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,.45);
+    opacity: 0;
+    transition: opacity var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .page-card:hover .card-overlay { opacity: 1; }
+
+  .overlay-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition), background var(--transition);
+  }
+
+  .overlay-btn:hover { transform: scale(1.15); }
+
+  .btn-view { background: rgba(255,255,255,.9); color: var(--accent-dark); }
+  .btn-del  { background: rgba(239,68,68,.9); color: #fff; }
+
+  /* Drag handle */
+  .drag-handle {
+    position: absolute;
+    top: 8px; left: 8px;
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,.85);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+
+  .page-card:hover .drag-handle { opacity: 1; }
+
+  /* Page number badge */
+  .page-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(15,23,42,.6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Card footer */
+  .card-footer {
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-filename {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+
+  .card-pagenum {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 1px;
+  }
+
+  /* Progress overlay */
+  .progress-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+  }
+
+  .progress-overlay.active { opacity: 1; pointer-events: all; }
+
+  .progress-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 36px 40px;
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+    min-width: 280px;
+  }
+
+  .progress-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .progress-card p  { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .progress-bar-wrap {
+    background: var(--bg);
+    border-radius: 20px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 20px;
+    transition: width 200ms ease;
+    width: 0%;
+  }
+
+  .progress-pct { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.85);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+    padding: 20px;
+  }
+
+  .lightbox.active { opacity: 1; pointer-events: all; }
+
+  .lightbox-inner {
+    position: relative;
+    max-width: min(90vw, 700px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lightbox-inner canvas {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-xl);
+    max-height: 80vh;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: -14px; right: -14px;
+    width: 36px; height: 36px;
+    background: var(--surface);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    color: var(--text);
+    z-index: 1;
+  }
+
+  .lightbox-label {
+    text-align: center;
+    margin-top: 12px;
+    color: rgba(255,255,255,.7);
+    font-size: 13px;
+  }
+
+  /* Touch drag ghost */
+  .touch-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 999;
+    opacity: .85;
+    transform: scale(1.05);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-xl);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  /* Drop insertion line */
+  .drop-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    z-index: 10;
+    pointer-events: none;
+    display: none;
+  }
+
+  .drop-line.before { left: -2px; display: block; }
+  .drop-line.after  { right: -2px; display: block; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: var(--text);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 300ms ease;
+    white-space: nowrap;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Responsive header */
+  @media (max-width: 500px) {
+    .header { padding: 0 12px; }
+    .logo span { display: none; }
+    .btn { padding: 7px 12px; font-size: 13px; }
+    .page-counter { display: none; }
+    .main { padding: 16px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="7" fill="#6366f1"/>
+      <path d="M7 8h14M7 12h10M7 16h12M7 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span>PDF Page Manager</span>
+  </div>
+  <div class="header-actions">
+    <div class="page-counter" id="pageCounter" style="display:none">0 pages</div>
+    <label class="btn btn-secondary" id="addMoreBtn" style="display:none; cursor:pointer">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add PDFs
+      <input type="file" accept="application/pdf" multiple id="addMoreInput" style="display:none">
+    </label>
+    <button class="btn btn-primary" id="downloadBtn" style="display:none" disabled>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M3 12h10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download PDF
+    </button>
+  </div>
+</header>
+
+<main class="main">
+  <!-- Empty state -->
+  <div id="emptyState" class="empty-state">
+    <div class="upload-zone" id="dropZone">
+      <input type="file" accept="application/pdf" multiple id="fileInput">
+      <div class="upload-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <path d="M18 4C10.268 4 4 10.268 4 18s6.268 14 14 14 14-6.268 14-14S25.732 4 18 4z" fill="#eef2ff"/>
+          <path d="M18 10v12M13 15l5-5 5 5M11 26h14" stroke="#6366f1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="upload-title">Drop PDF files here</div>
+      <div class="upload-sub">
+        or <strong>click to browse</strong><br>
+        Upload one or more PDF files to get started.<br>
+        Reorder, delete pages, and export a new PDF.
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar (shown when pages exist) -->
+  <div class="toolbar" id="toolbar" style="display:none">
+    <div class="toolbar-left">
+      <span style="font-size:15px; font-weight:700; color:var(--text)">Pages</span>
+    </div>
+    <button class="btn btn-danger" id="clearAllBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M5 3V2h4v1M3 3l.7 8.6A1 1 0 004.7 13h4.6a1 1 0 001-.86L11 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Clear all
+    </button>
+  </div>
+
+  <!-- Page grid -->
+  <div class="grid" id="pageGrid" style="display:none"></div>
+</main>
+
+<!-- Progress overlay -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-card">
+    <h3>Building PDF…</h3>
+    <p>Merging your pages into a single file</p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner" id="lightboxInner">
+    <button class="lightbox-close" id="lightboxClose">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <canvas id="lightboxCanvas"></canvas>
+    <div class="lightbox-label" id="lightboxLabel"></div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ─── State ────────────────────────────────────────────────────────────────────
+// pages: [{ id, fileName, origPageNum, pdfBytes, pageIndex }]
+// pdfDocCache: Map<fileName, PDFDocument (pdfjs)>
+const state = {
+  pages: [],
+  pdfBytesCache: new Map(),  // fileName -> ArrayBuffer (original bytes for pdf-lib)
+  pdfJsCache: new Map(),     // fileName -> pdfjs document
+  renderQueue: [],
+  rendering: false,
+};
+
+let dragSrcId = null;
+let touchGhost = null;
+let touchDragId = null;
+let touchStartX = 0, touchStartY = 0;
+let touchCurrentTarget = null;
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const emptyState   = document.getElementById('emptyState');
+const toolbar      = document.getElementById('toolbar');
+const pageGrid     = document.getElementById('pageGrid');
+const fileInput    = document.getElementById('fileInput');
+const addMoreInput = document.getElementById('addMoreInput');
+const addMoreBtn   = document.getElementById('addMoreBtn');
+const downloadBtn  = document.getElementById('downloadBtn');
+const clearAllBtn  = document.getElementById('clearAllBtn');
+const pageCounter  = document.getElementById('pageCounter');
+const dropZone     = document.getElementById('dropZone');
+const progressOverlay = document.getElementById('progressOverlay');
+const progressBar  = document.getElementById('progressBar');
+const progressPct  = document.getElementById('progressPct');
+const lightbox     = document.getElementById('lightbox');
+const lightboxCanvas = document.getElementById('lightboxCanvas');
+const lightboxLabel  = document.getElementById('lightboxLabel');
+const lightboxClose  = document.getElementById('lightboxClose');
+
+// ─── File loading ─────────────────────────────────────────────────────────────
+async function loadFiles(files) {
+  const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (!pdfFiles.length) { showToast('Please select PDF files only'); return; }
+
+  for (const file of pdfFiles) {
+    const bytes = await file.arrayBuffer();
+    state.pdfBytesCache.set(file.name, bytes);
+
+    let doc;
+    try {
+      doc = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
+    } catch(e) {
+      showToast(`Could not read "${file.name}"`);
+      continue;
+    }
+    state.pdfJsCache.set(file.name, doc);
+
+    for (let i = 1; i <= doc.numPages; i++) {
+      state.pages.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        fileName: file.name,
+        origPageNum: i,
+        pageIndex: i - 1,
+      });
+    }
+  }
+
+  renderGrid();
+}
+
+// ─── Grid rendering ───────────────────────────────────────────────────────────
+function renderGrid() {
+  const hasPages = state.pages.length > 0;
+
+  emptyState.style.display   = hasPages ? 'none' : '';
+  toolbar.style.display      = hasPages ? '' : 'none';
+  pageGrid.style.display     = hasPages ? '' : 'none';
+  addMoreBtn.style.display   = hasPages ? '' : 'none';
+  downloadBtn.style.display  = hasPages ? '' : 'none';
+  pageCounter.style.display  = hasPages ? '' : 'none';
+  downloadBtn.disabled       = !hasPages;
+
+  // Count files
+  const fileCount = new Set(state.pages.map(p => p.fileName)).size;
+  pageCounter.textContent = `${state.pages.length} page${state.pages.length !== 1 ? 's' : ''} from ${fileCount} file${fileCount !== 1 ? 's' : ''}`;
+
+  pageGrid.innerHTML = '';
+  state.pages.forEach((page, idx) => {
+    pageGrid.appendChild(createCard(page, idx));
+  });
+
+  // Queue thumbnail rendering
+  state.pages.forEach(page => queueRender(page));
+}
+
+function createCard(page, idx) {
+  const card = document.createElement('div');
+  card.className = 'page-card';
+  card.dataset.id = page.id;
+  card.draggable = true;
+
+  card.innerHTML = `
+    <div class="card-thumb">
+      <div class="skeleton" id="skel-${page.id}"></div>
+      <canvas id="canvas-${page.id}" style="display:none"></canvas>
+      <div class="drop-line" id="dl-${page.id}"></div>
+      <div class="page-badge">${idx + 1}</div>
+      <div class="drag-handle">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 3h6M4 7h6M4 11h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-overlay">
+        <button class="overlay-btn btn-view" data-id="${page.id}" title="View page">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
+        <button class="overlay-btn btn-del" data-id="${page.id}" title="Remove page">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="card-footer">
+      <div class="card-filename">${escapeHtml(page.fileName)}</div>
+      <div class="card-pagenum">Page ${idx + 1}</div>
+    </div>
+  `;
+
+  // Desktop drag
+  card.addEventListener('dragstart', onDragStart);
+  card.addEventListener('dragend', onDragEnd);
+  card.addEventListener('dragover', onDragOver);
+  card.addEventListener('dragleave', onDragLeave);
+  card.addEventListener('drop', onDrop);
+
+  // Touch drag
+  card.addEventListener('touchstart', onTouchStart, { passive: false });
+  card.addEventListener('touchmove', onTouchMove, { passive: false });
+  card.addEventListener('touchend', onTouchEnd);
+
+  // Buttons
+  card.querySelector('.btn-view').addEventListener('click', e => {
+    e.stopPropagation();
+    openLightbox(page.id);
+  });
+  card.querySelector('.btn-del').addEventListener('click', e => {
+    e.stopPropagation();
+    removePage(page.id);
+  });
+
+  return card;
+}
+
+// ─── Thumbnail rendering ──────────────────────────────────────────────────────
+function queueRender(page) {
+  state.renderQueue.push(page);
+  processQueue();
+}
+
+async function processQueue() {
+  if (state.rendering) return;
+  state.rendering = true;
+  while (state.renderQueue.length) {
+    const page = state.renderQueue.shift();
+    await renderThumb(page);
+  }
+  state.rendering = false;
+}
+
+async function renderThumb(page, scale = null) {
+  const canvas = document.getElementById(`canvas-${page.id}`);
+  const skel   = document.getElementById(`skel-${page.id}`);
+  if (!canvas) return;
+
+  const doc = state.pdfJsCache.get(page.fileName);
+  if (!doc) return;
+
+  try {
+    const pdfPage = await doc.getPage(page.origPageNum);
+    const viewport = pdfPage.getViewport({ scale: scale || getThumbScale(pdfPage) });
+    canvas.width  = viewport.width;
+    canvas.height = viewport.height;
+    await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    canvas.style.display = 'block';
+    if (skel) skel.style.display = 'none';
+  } catch(e) {
+    if (skel) skel.style.display = 'none';
+  }
+}
+
+function getThumbScale(pdfPage) {
+  const viewport = pdfPage.getViewport({ scale: 1 });
+  return 180 / viewport.width;
+}
+
+// ─── Desktop Drag & Drop ──────────────────────────────────────────────────────
+function onDragStart(e) {
+  dragSrcId = this.dataset.id;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragSrcId);
+}
+
+function onDragEnd(e) {
+  this.classList.remove('dragging');
+  clearDropIndicators();
+  dragSrcId = null;
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (!dragSrcId || this.dataset.id === dragSrcId) return;
+  clearDropIndicators();
+  const dl = document.getElementById(`dl-${this.dataset.id}`);
+  if (!dl) return;
+  const rect = this.getBoundingClientRect();
+  const isBefore = e.clientX < rect.left + rect.width / 2;
+  dl.className = `drop-line ${isBefore ? 'before' : 'after'}`;
+  touchCurrentTarget = { id: this.dataset.id, before: isBefore };
+}
+
+function onDragLeave(e) {
+  if (!this.contains(e.relatedTarget)) {
+    clearDropIndicators();
+    touchCurrentTarget = null;
+  }
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  if (!dragSrcId || this.dataset.id === dragSrcId) return;
+  const rect = this.getBoundingClientRect();
+  const before = e.clientX < rect.left + rect.width / 2;
+  movePage(dragSrcId, this.dataset.id, before);
+}
+
+function clearDropIndicators() {
+  document.querySelectorAll('.drop-line').forEach(el => el.className = 'drop-line');
+  document.querySelectorAll('.page-card.drag-target-before, .page-card.drag-target-after')
+    .forEach(el => { el.classList.remove('drag-target-before', 'drag-target-after'); });
+}
+
+// ─── Touch Drag & Drop ────────────────────────────────────────────────────────
+function onTouchStart(e) {
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  touchDragId = null;
+
+  // Delay to distinguish tap from drag
+  this._touchTimer = setTimeout(() => {
+    touchDragId = this.dataset.id;
+    this.classList.add('dragging');
+    createTouchGhost(this, t.clientX, t.clientY);
+  }, 120);
+}
+
+function onTouchMove(e) {
+  const t = e.touches[0];
+  if (!touchDragId) {
+    // Check if moved enough to cancel the timer
+    const dx = Math.abs(t.clientX - touchStartX);
+    const dy = Math.abs(t.clientY - touchStartY);
+    if (dx > 5 || dy > 5) clearTimeout(document.querySelector(`[data-id]`)?._touchTimer);
+    return;
+  }
+  e.preventDefault();
+  moveTouchGhost(t.clientX, t.clientY);
+
+  // Find drop target
+  if (touchGhost) touchGhost.style.display = 'none';
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  if (touchGhost) touchGhost.style.display = '';
+  const card = el?.closest('.page-card');
+  clearDropIndicators();
+  if (card && card.dataset.id !== touchDragId) {
+    const rect = card.getBoundingClientRect();
+    const before = t.clientX < rect.left + rect.width / 2;
+    const dl = document.getElementById(`dl-${card.dataset.id}`);
+    if (dl) dl.className = `drop-line ${before ? 'before' : 'after'}`;
+    touchCurrentTarget = { id: card.dataset.id, before };
+  } else {
+    touchCurrentTarget = null;
+  }
+}
+
+function onTouchEnd(e) {
+  clearTimeout(this._touchTimer);
+  if (!touchDragId) return;
+
+  removeTouchGhost();
+  const card = document.querySelector(`[data-id="${touchDragId}"]`);
+  if (card) card.classList.remove('dragging');
+  clearDropIndicators();
+
+  if (touchCurrentTarget) {
+    movePage(touchDragId, touchCurrentTarget.id, touchCurrentTarget.before);
+  }
+
+  touchDragId = null;
+  touchCurrentTarget = null;
+}
+
+function createTouchGhost(card, x, y) {
+  if (touchGhost) removeTouchGhost();
+  touchGhost = card.cloneNode(true);
+  touchGhost.className = 'touch-ghost';
+  const w = card.offsetWidth;
+  touchGhost.style.width = w + 'px';
+  touchGhost.style.left = (x - w / 2) + 'px';
+  touchGhost.style.top  = (y - 40) + 'px';
+  document.body.appendChild(touchGhost);
+}
+
+function moveTouchGhost(x, y) {
+  if (!touchGhost) return;
+  const w = touchGhost.offsetWidth;
+  touchGhost.style.left = (x - w / 2) + 'px';
+  touchGhost.style.top  = (y - 40) + 'px';
+}
+
+function removeTouchGhost() {
+  if (touchGhost) { touchGhost.remove(); touchGhost = null; }
+}
+
+// ─── Page operations ──────────────────────────────────────────────────────────
+function movePage(srcId, targetId, before) {
+  const srcIdx    = state.pages.findIndex(p => p.id === srcId);
+  const targetIdx = state.pages.findIndex(p => p.id === targetId);
+  if (srcIdx === -1 || targetIdx === -1) return;
+
+  const [page] = state.pages.splice(srcIdx, 1);
+  const newTarget = state.pages.findIndex(p => p.id === targetId);
+  state.pages.splice(before ? newTarget : newTarget + 1, 0, page);
+  renderGrid();
+}
+
+function removePage(id) {
+  state.pages = state.pages.filter(p => p.id !== id);
+  renderGrid();
+}
+
+// ─── PDF Export ───────────────────────────────────────────────────────────────
+async function downloadPDF() {
+  if (!state.pages.length) return;
+  showProgress(0);
+
+  try {
+    const { PDFDocument } = PDFLib;
+    const outDoc = await PDFDocument.create();
+    const total  = state.pages.length;
+
+    // Group pages by source file to avoid re-loading
+    const srcDocs = new Map();
+
+    for (let i = 0; i < total; i++) {
+      const page = state.pages[i];
+      if (!srcDocs.has(page.fileName)) {
+        const bytes = state.pdfBytesCache.get(page.fileName);
+        const doc   = await PDFDocument.load(bytes);
+        srcDocs.set(page.fileName, doc);
+      }
+      const src    = srcDocs.get(page.fileName);
+      const [copy] = await outDoc.copyPages(src, [page.pageIndex]);
+      outDoc.addPage(copy);
+      showProgress(Math.round(((i + 1) / total) * 90));
+    }
+
+    showProgress(95);
+    const pdfBytes = await outDoc.save();
+    showProgress(100);
+
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'merged.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setTimeout(() => hideProgress(), 600);
+    showToast('PDF downloaded!');
+  } catch(e) {
+    hideProgress();
+    showToast('Export failed: ' + e.message);
+  }
+}
+
+function showProgress(pct) {
+  progressOverlay.classList.add('active');
+  progressBar.style.width = pct + '%';
+  progressPct.textContent  = pct + '%';
+}
+
+function hideProgress() {
+  progressOverlay.classList.remove('active');
+}
+
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+async function openLightbox(pageId) {
+  const page = state.pages.find(p => p.id === pageId);
+  if (!page) return;
+  const doc = state.pdfJsCache.get(page.fileName);
+  if (!doc) return;
+
+  const pdfPage = await doc.getPage(page.origPageNum);
+  const vp = pdfPage.getViewport({ scale: 1 });
+  const maxW = Math.min(window.innerWidth * 0.85, 680);
+  const scale = maxW / vp.width;
+  const viewport = pdfPage.getViewport({ scale });
+  lightboxCanvas.width  = viewport.width;
+  lightboxCanvas.height = viewport.height;
+  await pdfPage.render({ canvasContext: lightboxCanvas.getContext('2d'), viewport }).promise;
+  lightboxLabel.textContent = `${escapeHtml(page.fileName)} — Page ${page.origPageNum}`;
+  lightbox.classList.add('active');
+}
+
+function closeLightbox() { lightbox.classList.remove('active'); }
+
+lightboxClose.addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.getElementById('toastContainer').appendChild(toast);
+  requestAnimationFrame(() => { toast.classList.add('show'); });
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 350);
+  }, 2800);
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Event wiring ─────────────────────────────────────────────────────────────
+fileInput.addEventListener('change', e => loadFiles(e.target.files));
+addMoreInput.addEventListener('change', e => loadFiles(e.target.files));
+downloadBtn.addEventListener('click', downloadPDF);
+clearAllBtn.addEventListener('click', () => {
+  if (!confirm('Remove all pages?')) return;
+  state.pages = [];
+  state.pdfBytesCache.clear();
+  state.pdfJsCache.clear();
+  renderGrid();
+});
+
+// Drop zone
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  loadFiles(e.dataTransfer.files);
+});
+
+// Global drag-over for page reordering (when dragging over grid background)
+document.addEventListener('dragover', e => e.preventDefault());
+
+// Prevent accidental file drops on the page grid background
+pageGrid.addEventListener('dragover', e => e.preventDefault());
+pageGrid.addEventListener('drop', e => e.preventDefault());
+</script>
+</body>
+</html>
