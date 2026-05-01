@@ -46,7 +46,7 @@
   "@type": "WebApplication",
   "name": "PrivatePDF",
   "url": "https://privatepdf.eu",
-  "description": "Free online PDF editor. Merge multiple PDFs, reorder pages, rotate and delete pages - all in your browser. No upload, no account, 100% private.",
+  "description": "Free online PDF editor. Merge multiple PDF files, reorder pages, rotate and delete pages - all in your browser. No upload, no account, 100% private.",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "All",
   "browserRequirements": "Requires a modern browser with JavaScript enabled",
@@ -139,6 +139,24 @@
     --transition: 200ms cubic-bezier(.4,0,.2,1);
   }
 
+  [data-theme="dark"] {
+    --accent: #818cf8;
+    --accent-light: #a5b4fc;
+    --accent-dark: #6366f1;
+    --accent-bg: #1e1b4b;
+    --danger: #f87171;
+    --danger-bg: #450a0a;
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,.4), 0 2px 4px -1px rgba(0,0,0,.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.4), 0 4px 6px -2px rgba(0,0,0,.2);
+    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.5), 0 10px 10px -5px rgba(0,0,0,.3);
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background: var(--bg);
@@ -146,6 +164,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   /* Header */
@@ -161,6 +180,7 @@
     top: 0;
     z-index: 100;
     box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .logo {
@@ -190,7 +210,10 @@
     border-radius: 20px;
     font-weight: 500;
     white-space: nowrap;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   }
+
+  [data-theme="dark"] .page-counter { border-color: #4338ca; }
 
   /* Buttons */
   .btn {
@@ -289,7 +312,10 @@
     background: var(--accent-bg);
     color: var(--accent-dark);
     border: 1px solid #c7d2fe;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   }
+
+  [data-theme="dark"] .badge { border-color: #4338ca; }
 
   .badge svg { flex-shrink: 0; }
 
@@ -313,6 +339,7 @@
     transition: all var(--transition);
     background: var(--surface);
     position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .upload-zone:hover, .upload-zone.drag-over {
@@ -334,6 +361,7 @@
     justify-content: center;
     margin: 0 auto 20px;
     color: var(--accent);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   .upload-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
@@ -368,6 +396,7 @@
     padding: 24px 20px;
     text-align: center;
     box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .step-icon {
@@ -379,6 +408,7 @@
     align-items: center;
     justify-content: center;
     margin: 0 auto 14px;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   .step h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
@@ -391,6 +421,7 @@
     border-bottom: 1px solid var(--border);
     padding: 56px 20px;
     margin-bottom: 64px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
   }
 
   .features-inner {
@@ -420,6 +451,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   .feature h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
@@ -474,6 +506,7 @@
     border-top: 1px solid var(--border);
     padding: 32px 20px;
     text-align: center;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
   }
 
   .footer p {
@@ -519,7 +552,7 @@
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: box-shadow var(--transition), transform var(--transition);
+    transition: box-shadow var(--transition), transform var(--transition), background-color 0.2s ease, border-color 0.2s ease;
     position: relative;
     cursor: grab;
     border: 2px solid transparent;
@@ -638,6 +671,7 @@
   .card-footer {
     padding: 8px 10px;
     border-top: 1px solid var(--border);
+    transition: border-color 0.2s ease;
   }
 
   .card-filename {
@@ -674,6 +708,7 @@
     text-align: center;
     box-shadow: var(--shadow-xl);
     min-width: 280px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .progress-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
@@ -685,6 +720,7 @@
     height: 8px;
     overflow: hidden;
     margin-bottom: 10px;
+    transition: background-color 0.2s ease;
   }
 
   .progress-bar-fill {
@@ -745,6 +781,7 @@
     box-shadow: var(--shadow-md);
     color: var(--text);
     z-index: 1;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .lightbox-label { text-align: center; margin-top: 12px; color: rgba(255,255,255,.7); font-size: 13px; }
@@ -760,6 +797,7 @@
     box-shadow: var(--shadow-xl);
     background: var(--surface);
     overflow: hidden;
+    transition: background-color 0.2s ease;
   }
 
   /* Toast */
@@ -777,19 +815,25 @@
   }
 
   .toast {
-    background: var(--text);
-    color: #fff;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
     padding: 10px 20px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
     opacity: 0;
     transform: translateY(10px);
-    transition: all 300ms ease;
+    transition: all 300ms ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     white-space: nowrap;
   }
 
   .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Theme Toggle Icons */
+  .icon-moon { display: none; }
+  [data-theme="dark"] .icon-sun { display: none; }
+  [data-theme="dark"] .icon-moon { display: block; }
 
   @media (max-width: 500px) {
     .header { padding: 0 12px; }
@@ -814,6 +858,10 @@
   </a>
   <div class="header-actions">
     <span class="page-counter" id="pageCounter" aria-live="polite">0 pages</span>
+    <button class="btn btn-secondary" id="themeToggle" aria-label="Toggle dark mode">
+      <svg class="icon-sun" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.76 2.76l1.42 1.42M9.82 9.82l1.42 1.42M2.76 11.24l1.42-1.42M9.82 4.18l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg class="icon-moon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M12 8.26a5.5 5.5 0 01-6.26-6.26A5.5 5.5 0 1012 8.26z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <input type="file" id="addMoreInput" accept=".pdf" multiple hidden>
     <button class="btn btn-secondary" id="addMoreBtn" aria-label="Add more PDF files">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -1075,6 +1123,7 @@ const lightbox        = document.getElementById('lightbox');
 const lightboxClose   = document.getElementById('lightboxClose');
 const lightboxCanvas  = document.getElementById('lightboxCanvas');
 const lightboxLabel   = document.getElementById('lightboxLabel');
+const themeToggle     = document.getElementById('themeToggle');
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -1441,6 +1490,25 @@ dropZone.addEventListener('drop', e => {
 document.addEventListener('dragover', e => e.preventDefault());
 pageGrid.addEventListener('dragover', e => e.preventDefault());
 pageGrid.addEventListener('drop', e => e.preventDefault());
+
+// Dark Mode Toggle
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('theme', theme);
+}
+
+const savedTheme = localStorage.getItem('theme');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
+themeToggle.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  applyTheme(isDark ? 'light' : 'dark');
+});
 </script>
 </body>
 </html>
